@@ -1,0 +1,113 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1265
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red170\green13\blue145;\red63\green110\blue116;\red100\green56\blue32;
+\red46\green13\blue110;\red38\green71\blue75;\red196\green26\blue22;\red92\green38\blue153;\red28\green0\blue207;
+}
+\margl1440\margr1440\vieww21120\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 CODE SNIPPET #1\
+\
+\pard\tx529\pardeftab529\pardirnatural
+
+\f1\fs22 \cf0 \CocoaLigature0 - (\cf2 void\cf0 )updateReachabilityStatus:(\cf3 Reachability\cf0  *)curReach \{\
+    \cf4 NSParameterAssert\cf0 ([curReach \cf5 isKindOfClass\cf0 : [\cf3 Reachability\cf0  \cf5 class\cf0 ]]);\
+    \cf3 NetworkStatus\cf0  netStatus = [curReach \cf6 currentReachabilityStatus\cf0 ];\
+    \cf2 if\cf0 (curReach == \cf3 hostReach\cf0 ) \{\
+        \cf2 switch\cf0  (netStatus)\
+        \{\
+            \cf2 case\cf0  \cf6 NotReachable\cf0 :\
+            \{\
+                \cf5 NSLog\cf0 (\cf7 @"Server Not Available"\cf0 );\
+                \cf3 serverAvailable\cf0  = \cf2 NO\cf0 ;\
+                \cf2 break\cf0 ;\
+            \}\
+                \
+            \cf2 case\cf0  \cf6 ReachableViaWWAN\cf0 :\
+            \{\
+                \cf5 NSLog\cf0 (\cf7 @"Server Reachable via WWAN"\cf0 );\
+                \cf3 serverAvailable\cf0  = \cf2 YES\cf0 ;\
+                \cf2 break\cf0 ;\
+            \}\
+            \cf2 case\cf0  \cf6 ReachableViaWiFi\cf0 :\
+            \{\
+                \cf5 NSLog\cf0 (\cf7 @"Server Reachable via WiFi"\cf0 );\
+                \cf3 serverAvailable\cf0  = \cf2 YES\cf0 ;\
+                \cf2 break\cf0 ;\
+            \}\
+        \}\
+    \}\
+    \cf2 if\cf0 (curReach == \cf3 internetReach\cf0  || curReach == \cf3 wifiReach\cf0 ) \{\
+        \cf2 switch\cf0  (netStatus)\
+        \{\
+            \cf2 case\cf0  \cf6 NotReachable\cf0 :\
+            \{\
+                \cf5 NSLog\cf0 (\cf7 @"Internet Not Available"\cf0 );\
+                \cf3 internetAvailable\cf0  = \cf2 NO\cf0 ;\
+                \cf2 break\cf0 ;\
+            \}\
+                \
+            \cf2 case\cf0  \cf6 ReachableViaWWAN\cf0 :\
+            \{\
+                \cf5 NSLog\cf0 (\cf7 @"Internet Reachable via WWAN"\cf0 );\
+                \cf3 internetAvailable\cf0  = \cf2 YES\cf0 ;\
+                \cf2 break\cf0 ;\
+            \}\
+            \cf2 case\cf0  \cf6 ReachableViaWiFi\cf0 :\
+            \{\
+                \cf5 NSLog\cf0 (\cf7 @"Internet Reachable via WiFi"\cf0 );\
+                \cf3 internetAvailable\cf0  = \cf2 YES\cf0 ;\
+                \cf2 break\cf0 ;\
+            \}\
+        \}\
+    \}\
+\}\
+\
+- (\cf2 void\cf0 )reachabilityChanged:(\cf8 NSNotification\cf0 *)note\
+\{\
+    \cf3 Reachability\cf0 * curReach = [note \cf5 object\cf0 ];\
+    [\cf2 self\cf0  \cf6 updateReachabilityStatus\cf0 :curReach];\
+\}\
+\
+CODE SNIPPET #2\
+\
+        [\cf8 NSURLConnection\cf0  \cf5 sendAsynchronousRequest\cf0 : urlRequest \cf5 queue\cf0 :[[\cf8 NSOperationQueue\cf0  \cf5 alloc\cf0 ] \cf5 init\cf0 ] \cf5 completionHandler\cf0 :^(\cf8 NSURLResponse\cf0  *response, \cf8 NSData\cf0  *data, \cf8 NSError\cf0  *error) \{\
+            \cf2 if\cf0  (([data \cf5 length\cf0 ] > \cf9 0\cf0 ) && (error == \cf2 nil\cf0 )) \{\
+                \cf5 dispatch_async\cf0 (\cf4 dispatch_get_main_queue\cf0 (), ^\{\
+                    \cf8 NSString\cf0  *dataString = [[\cf8 NSString\cf0  \cf5 alloc\cf0 ] \cf5 initWithData\cf0 :data \cf5 encoding\cf0 :\cf5 NSUTF8StringEncoding\cf0 ];\
+                    \cf5 NSLog\cf0 (\cf7 @"Got Data: %@"\cf0 ,dataString);\
+                \});\
+            \} \cf2 else\cf0  \cf2 if\cf0  (([data \cf5 length\cf0 ] == \cf9 0\cf0 ) && (error == \cf2 nil\cf0 )) \{\
+                \cf8 UIAlertView\cf0  *alert = [[\cf8 UIAlertView\cf0  \cf5 alloc\cf0 ]\
+                                      \cf5 initWithTitle\cf0 :\cf7 @"No Data Found"\cf0  \cf5 message\cf0 :\cf7 @"It looks like we weren't able to find a file"\cf0  \cf5 delegate\cf0 :\cf2 self\cf0 \
+                                      \cf5 cancelButtonTitle\cf0 :\cf7 @"OK"\cf0  \cf5 otherButtonTitles\cf0 : \cf2 nil\cf0 ];\
+                [alert \cf5 show\cf0 ];\
+            \} \cf2 else\cf0  \cf2 if\cf0  (error.\cf5 code\cf0  == -\cf9 1009\cf0 ) \{\
+                \cf8 UIAlertView\cf0  *alert = [[\cf8 UIAlertView\cf0  \cf5 alloc\cf0 ]\
+                                      \cf5 initWithTitle\cf0 :\cf7 @"Internet Disabled"\cf0  \cf5 message\cf0 :\cf7 @"It looks like your device may not be connected to the Internet. Please make sure the Internet is on and try the update again."\cf0  \cf5 delegate\cf0 :\cf2 self\cf0 \
+                                      \cf5 cancelButtonTitle\cf0 :\cf7 @"OK"\cf0  \cf5 otherButtonTitles\cf0 : \cf2 nil\cf0 ];\
+                [alert \cf5 show\cf0 ];\
+            \} \cf2 else\cf0  \cf2 if\cf0  (error != \cf2 nil\cf0 ) \{\
+                \cf5 NSLog\cf0 (\cf7 @"Error = %@"\cf0 , error);\
+                \cf8 UIAlertView\cf0  *alert = [[\cf8 UIAlertView\cf0  \cf5 alloc\cf0 ]\
+                                      \cf5 initWithTitle\cf0 :\cf7 @"Unknown Error"\cf0  \cf5 message\cf0 :[\cf8 NSString\cf0  \cf5 stringWithFormat\cf0 :\cf7 @"An error has occured. Please contact support. Error %@"\cf0 ,error] \cf5 delegate\cf0 :\cf2 self\cf0 \
+                                      \cf5 cancelButtonTitle\cf0 :\cf7 @"OK"\cf0  \cf5 otherButtonTitles\cf0 : \cf2 nil\cf0 ];\
+                [alert \cf5 show\cf0 ];\
+            \}\
+        \}];\
+\
+CODE SNIPPET #3\
+\
+    \cf8 NSString\cf0  *post = [\cf8 NSString\cf0  \cf5 stringWithFormat\cf0 : \cf7 @"username=%@&sort=%@\'93\cf0 ,\cf3 myUserName\cf0 ,\cf7 @\'93alphaAscending\'94\cf0 ];\
+    \
+    \cf8 NSData\cf0  *postData = [post \cf5 dataUsingEncoding\cf0 :\cf5 NSASCIIStringEncoding\cf0  \cf5 allowLossyConversion\cf0 :\cf2 YES\cf0 ];\
+    \cf8 NSString\cf0  *postLength = [\cf8 NSString\cf0  \cf5 stringWithFormat\cf0 :\cf7 @"%d"\cf0 , [postData \cf5 length\cf0 ]];\
+    \
+    \cf8 NSMutableURLRequest\cf0  *urlRequest = [[\cf8 NSMutableURLRequest\cf0  \cf5 alloc\cf0 ] \cf5 init\cf0 ];\
+    [urlRequest \cf5 setURL\cf0 :[\cf8 NSURL\cf0  \cf5 URLWithString\cf0 :\cf7 @"http://www.yourwebsite.com/api/?method=getMyTeam\'94\cf0 ]];\
+    [urlRequest \cf5 setHTTPMethod\cf0 :\cf7 @"POST"\cf0 ];\
+    [urlRequest \cf5 setValue\cf0 :postLength \cf5 forHTTPHeaderField\cf0 :\cf7 @"Content-Length"\cf0 ];\
+    [urlRequest \cf5 setValue\cf0 :\cf7 @"application/x-www-form-urlencoded"\cf0  \cf5 forHTTPHeaderField\cf0 :\cf7 @"Content-Type"\cf0 ];\
+    [urlRequest \cf5 setHTTPBody\cf0 :postData];\
+    \
+}
